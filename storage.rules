@@ -1,0 +1,43 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    function isValidSize() {
+      // Max 5MB
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+    
+    // Receipts storage
+    match /receipts/{userId}/{fileName} {
+      // Users can read their own receipts
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Users can upload their own receipts
+      allow create: if isAuthenticated() 
+        && request.auth.uid == userId
+        && isImage()
+        && isValidSize();
+      
+      // Users can delete their own receipts
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+      
+      // No updates allowed
+      allow update: if false;
+    }
+    
+    // Default: deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

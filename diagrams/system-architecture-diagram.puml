@@ -1,0 +1,114 @@
+@startuml PriceSnap System Architecture
+!theme plain
+
+skinparam rectangle {
+    BackgroundColor<<mobile>> LightBlue
+    BackgroundColor<<paas>> LightGreen
+    BackgroundColor<<iaas>> LightYellow
+    BackgroundColor<<external>> LightCoral
+}
+
+package "Client Layer (Mobile)" <<mobile>> {
+  rectangle "React Native App\n(Expo)" as App {
+    component "UI Components" as UI
+    component "Navigation" as Nav
+    component "State Management\n(Zustand)" as State
+    component "Services Layer" as Services
+  }
+}
+
+package "PaaS Layer (Firebase)" <<paas>> {
+  rectangle "Firebase Authentication" as Auth
+  rectangle "Firebase Cloud Functions" as Functions {
+    component "processReceipt()" as OCR_Func
+    component "sendPriceAlerts()" as Alert_Func
+  }
+}
+
+package "IaaS Layer (Cloud Storage & Database)" <<iaas>> {
+  database "Firestore Database" as Firestore {
+    storage "users" as Users_Col
+    storage "products" as Products_Col
+    storage "stores" as Stores_Col
+    storage "receipts" as Receipts_Col
+    storage "searchLogs" as Logs_Col
+  }
+  
+  storage "Firebase Storage" as FStorage {
+    folder "receipts/{userId}/" as Receipts_Folder
+  }
+}
+
+package "External APIs" <<external>> {
+  rectangle "Google Cloud\nVision API" as Vision
+  rectangle "OpenFoodFacts\nAPI" as OpenFood
+  rectangle "Google Maps\nAPI" as Maps
+}
+
+' Client connections
+UI --> Nav
+Nav --> State
+State --> Services
+
+' Service connections to Firebase
+Services --> Auth : Authentication
+Services --> Functions : HTTP Callable
+Services --> Firestore : CRUD Operations
+Services --> FStorage : Image Upload/Download
+
+' Function connections
+OCR_Func --> Vision : OCR Request
+OCR_Func --> OpenFood : Image Search
+OCR_Func --> Firestore : Store Data
+Alert_Func --> Firestore : Query & Update
+
+' Cloud Functions triggers
+Firestore -right-> Alert_Func : onCreate Trigger
+
+' External API connections
+Services --> Maps : Get Directions
+Services --> OpenFood : Product Search (Direct)
+
+' Storage connections
+FStorage --> Receipts_Folder : Store Images
+
+' Firestore collections
+Firestore --> Users_Col
+Firestore --> Products_Col
+Firestore --> Stores_Col
+Firestore --> Receipts_Col
+Firestore --> Logs_Col
+
+note right of App
+  **Frontend (SaaS)**
+  - React Native + Expo
+  - TypeScript
+  - Zustand State Management
+  - Cross-platform (iOS/Android)
+end note
+
+note right of Functions
+  **Backend (PaaS)**
+  - Node.js Cloud Functions
+  - Serverless Architecture
+  - Auto-scaling
+  - Event-driven
+end note
+
+note right of Firestore
+  **Database (IaaS)**
+  - NoSQL Document Database
+  - Real-time Sync
+  - Geolocation Queries
+  - Scalable & Fast
+end note
+
+note bottom of Vision
+  **Cloud Services**
+  - OCR Text Detection
+  - Image Recognition
+  - High Accuracy
+end note
+
+@enduml
+

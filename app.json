@@ -1,0 +1,68 @@
+{
+  "expo": {
+    "name": "PriceSnap",
+    "slug": "pricesnap",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.abdulaty.pricesnap",
+      "infoPlist": {
+        "NSCameraUsageDescription": "PriceSnap needs access to your camera to scan receipts.",
+        "NSPhotoLibraryUsageDescription": "PriceSnap needs access to your photo library to upload receipt images.",
+        "NSLocationWhenInUseUsageDescription": "PriceSnap needs your location to find nearby stores with the best prices."
+      }
+    },
+    "android": {
+      "package": "com.abdulaty.pricesnap",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow PriceSnap to access your camera to scan receipts."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow PriceSnap to use your location to find nearby stores."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff"
+        }
+      ]
+    ]
+  }
+}
+

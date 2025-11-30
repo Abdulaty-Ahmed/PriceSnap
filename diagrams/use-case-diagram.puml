@@ -1,0 +1,111 @@
+@startuml PriceSnap Use Case Diagram
+!theme plain
+skinparam actorStyle awesome
+
+left to right direction
+
+actor "User" as User
+actor "Firebase\nServices" as Firebase
+actor "External\nAPIs" as APIs
+
+rectangle "PriceSnap System" {
+  
+  package "Authentication" {
+    usecase "Register Account" as UC1
+    usecase "Login" as UC2
+    usecase "Logout" as UC3
+  }
+  
+  package "Receipt Management" {
+    usecase "Capture Receipt\nPhoto" as UC4
+    usecase "Upload Receipt\nImage" as UC5
+    usecase "Process OCR" as UC6
+    usecase "Extract Products\n& Prices" as UC7
+  }
+  
+  package "Product Search" {
+    usecase "Search Products" as UC8
+    usecase "View Product\nDetails" as UC9
+    usecase "Compare Prices" as UC10
+    usecase "Sort by Price" as UC11
+    usecase "Sort by Distance" as UC12
+  }
+  
+  package "Location Services" {
+    usecase "Get Current\nLocation" as UC13
+    usecase "Find Nearby\nStores" as UC14
+    usecase "Get Directions" as UC15
+  }
+  
+  package "Notifications" {
+    usecase "Register for\nNotifications" as UC16
+    usecase "Receive Price\nAlerts" as UC17
+    usecase "Receive New Store\nAlerts" as UC18
+  }
+  
+  package "Profile Management" {
+    usecase "View Profile" as UC19
+    usecase "Update Settings" as UC20
+  }
+}
+
+' User relationships
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC8
+User --> UC9
+User --> UC10
+User --> UC11
+User --> UC12
+User --> UC13
+User --> UC14
+User --> UC15
+User --> UC16
+User --> UC17
+User --> UC18
+User --> UC19
+User --> UC20
+
+' Receipt processing flow
+UC5 ..> UC6 : <<include>>
+UC6 ..> UC7 : <<include>>
+
+' Search flow
+UC8 ..> UC13 : <<include>>
+UC10 ..> UC8 : <<extend>>
+
+' Firebase relationships
+Firebase <-- UC1 : Authentication
+Firebase <-- UC2 : Authentication
+Firebase <-- UC3 : Authentication
+Firebase <-- UC5 : Storage
+Firebase <-- UC6 : Cloud Functions
+Firebase <-- UC7 : Firestore
+Firebase <-- UC8 : Firestore Query
+Firebase <-- UC17 : Cloud Messaging
+Firebase <-- UC18 : Cloud Messaging
+
+' External API relationships
+APIs <-- UC6 : Google Vision API
+APIs <-- UC7 : OpenFoodFacts API
+
+note right of UC6
+  Uses Google Cloud Vision API
+  for OCR text extraction
+end note
+
+note right of UC7
+  Fetches product images
+  from OpenFoodFacts API
+end note
+
+note bottom of UC17
+  Triggered automatically when
+  lower price is found nearby
+end note
+
+@enduml
+

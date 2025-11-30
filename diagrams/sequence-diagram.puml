@@ -1,0 +1,95 @@
+@startuml PriceSnap Receipt Upload Sequence
+!theme plain
+autonumber
+
+actor User
+participant "Mobile App" as App
+participant "Firebase\nAuth" as Auth
+participant "Firebase\nStorage" as Storage
+participant "Cloud\nFunction" as CF
+participant "Google\nVision API" as Vision
+participant "OpenFoodFacts\nAPI" as OFF
+participant "Firestore" as DB
+
+== Authentication ==
+User -> App: Open App
+App -> Auth: Check Auth State
+Auth --> App: User Authenticated
+
+== Receipt Upload ==
+User -> App: Capture/Select Receipt Image
+App -> App: Get Current Location
+User -> App: Enter Store Name
+User -> App: Click Upload
+
+App -> Storage: Upload Image
+activate Storage
+Storage --> App: Return Image URL
+deactivate Storage
+
+== OCR Processing ==
+App -> CF: Call processReceipt(imageUrl, storeName, location)
+activate CF
+
+CF -> Vision: Send Image for OCR
+activate Vision
+Vision -> Vision: Perform Text Detection
+Vision --> CF: Return Detected Text
+deactivate Vision
+
+CF -> CF: Parse Text\n(Extract Products & Prices)
+
+== Product Processing ==
+loop For Each Product
+  CF -> OFF: Search Product Image
+  activate OFF
+  OFF --> CF: Return Image URL
+  deactivate OFF
+  
+  CF -> DB: Create Product Document
+  activate DB
+  DB --> CF: Product Created
+  deactivate DB
+end
+
+== Store & Receipt Creation ==
+CF -> DB: Create Store Document
+activate DB
+DB --> CF: Store Created
+deactivate DB
+
+CF -> DB: Create Receipt Document
+activate DB
+DB --> CF: Receipt Created
+deactivate DB
+
+CF --> App: Return Success Response
+deactivate CF
+
+App -> User: Show Success Message
+
+== Price Alert (Async) ==
+DB -> CF: Trigger on Product Created
+activate CF
+CF -> DB: Query Existing Products
+activate DB
+DB --> CF: Return Products
+deactivate DB
+
+CF -> CF: Check if New Lowest Price
+
+alt New Lowest Price Found
+  CF -> DB: Query Nearby Users
+  activate DB
+  DB --> CF: Return Users
+  deactivate DB
+  
+  loop For Each User
+    CF -> App: Send Push Notification
+    App -> User: Display Price Alert
+  end
+end
+deactivate CF
+
+@enduml
+

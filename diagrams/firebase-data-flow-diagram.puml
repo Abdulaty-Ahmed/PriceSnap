@@ -1,0 +1,155 @@
+@startuml Firebase Data Flow Diagram
+!theme plain
+
+title PriceSnap - Firebase Data Flow
+
+skinparam rectangle {
+    BackgroundColor<<input>> LightBlue
+    BackgroundColor<<process>> LightGreen
+    BackgroundColor<<storage>> LightYellow
+    BackgroundColor<<output>> LightCoral
+}
+
+' Input
+rectangle "User Input" <<input>> {
+  (Receipt Image) as IMG
+  (Store Name) as STORE
+  (Location) as LOC
+}
+
+' Processing
+rectangle "Firebase Cloud Functions" <<process>> {
+  rectangle "processReceipt()" as PROCESS {
+    (1. Receive Data) as STEP1
+    (2. Upload to Storage) as STEP2
+    (3. Call Vision API) as STEP3
+    (4. Parse OCR Text) as STEP4
+    (5. Fetch Product Images) as STEP5
+    (6. Store in Firestore) as STEP6
+  }
+  
+  rectangle "sendPriceAlerts()" as ALERT {
+    (1. New Product Trigger) as ALERT1
+    (2. Compare Prices) as ALERT2
+    (3. Find Nearby Users) as ALERT3
+    (4. Send Notifications) as ALERT4
+  }
+}
+
+' Storage
+rectangle "Firebase Storage" <<storage>> {
+  database "Cloud Storage" as STORAGE {
+    folder "Receipt Images" as IMG_STORE
+  }
+  
+  database "Firestore" as DB {
+    storage "Products Collection" as PRODUCTS
+    storage "Stores Collection" as STORES
+    storage "Receipts Collection" as RECEIPTS
+    storage "Users Collection" as USERS
+    storage "Search Logs" as LOGS
+  }
+}
+
+' Output
+rectangle "User Output" <<output>> {
+  (Search Results) as SEARCH
+  (Product List) as LIST
+  (Price Comparison) as COMPARE
+  (Push Notifications) as NOTIF
+}
+
+' Data Flow - Upload Process
+IMG -down-> STEP1
+STORE -down-> STEP1
+LOC -down-> STEP1
+
+STEP1 -down-> STEP2
+STEP2 -down-> IMG_STORE : Store Image
+STEP2 -down-> STEP3 : Image URL
+
+STEP3 -down-> STEP4 : Raw OCR Text
+STEP4 -down-> STEP5 : Product Names
+
+STEP5 -down-> STEP6 : Products + Images
+
+STEP6 -down-> PRODUCTS : Create Documents
+STEP6 -down-> STORES : Create Document
+STEP6 -down-> RECEIPTS : Create Document
+
+' Data Flow - Price Alert Process
+PRODUCTS -right-> ALERT1 : onCreate Event
+ALERT1 -down-> ALERT2
+ALERT2 -down-> ALERT3
+ALERT3 -down-> USERS : Query Users
+ALERT3 -down-> ALERT4
+ALERT4 -up-> NOTIF : Send Alert
+
+' Data Flow - Search Process
+USERS -up-> SEARCH : User Query
+SEARCH -down-> PRODUCTS : Query Products
+PRODUCTS -up-> LIST : Return Results
+LIST -up-> COMPARE : Sort & Display
+
+' Data Flow - Logging
+SEARCH -down-> LOGS : Log Search
+
+note right of STEP3
+  **Google Cloud Vision API**
+  - Text Detection (OCR)
+  - Extract receipt content
+  - High accuracy
+end note
+
+note right of STEP5
+  **OpenFoodFacts API**
+  - Product image search
+  - Free & open database
+  - Food products focus
+end note
+
+note bottom of PRODUCTS
+  **Product Document Structure:**
+  {
+    productId: string
+    name: string (normalized)
+    originalName: string
+    price: number
+    storeId: string
+    storeName: string
+    storeLocation: GeoPoint
+    imageUrl: string
+    receiptId: string
+    uploadedBy: string
+    createdAt: timestamp
+  }
+end note
+
+note bottom of STORES
+  **Store Document Structure:**
+  {
+    storeId: string
+    name: string
+    location: GeoPoint
+    address: string
+    addedBy: string
+    createdAt: timestamp
+  }
+end note
+
+note bottom of RECEIPTS
+  **Receipt Document Structure:**
+  {
+    receiptId: string
+    imageUrl: string
+    storeName: string
+    storeLocation: GeoPoint
+    uploadedBy: string
+    processedAt: timestamp
+    ocrText: string
+    productCount: number
+  }
+end note
+
+@enduml
+

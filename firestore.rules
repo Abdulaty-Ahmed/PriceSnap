@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own data
+      allow read: if isOwner(userId);
+      
+      // Users can create their own account
+      allow create: if isAuthenticated() && isOwner(userId);
+      
+      // Users can update their own data
+      allow update: if isOwner(userId);
+      
+      // No deletion allowed
+      allow delete: if false;
+    }
+    
+    // Stores collection
+    match /stores/{storeId} {
+      // Anyone (authenticated) can read stores
+      allow read: if isAuthenticated();
+      
+      // Authenticated users can create stores
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasAll(['storeId', 'name', 'location', 'addedBy', 'createdAt'])
+        && request.resource.data.addedBy == request.auth.uid;
+      
+      // Store creator can update
+      allow update: if isAuthenticated() && resource.data.addedBy == request.auth.uid;
+      
+      // No deletion allowed
+      allow delete: if false;
+    }
+    
+    // Products collection
+    match /products/{productId} {
+      // Anyone (authenticated) can read products
+      allow read: if isAuthenticated();
+      
+      // Authenticated users can create products
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasAll([
+          'productId', 'name', 'originalName', 'price', 
+          'storeId', 'storeName', 'storeLocation', 'receiptId', 
+          'uploadedBy', 'createdAt'
+        ])
+        && request.resource.data.uploadedBy == request.auth.uid
+        && request.resource.data.price is number
+        && request.resource.data.price > 0;
+      
+      // Product uploader can update
+      allow update: if isAuthenticated() && resource.data.uploadedBy == request.auth.uid;
+      
+      // Product uploader can delete
+      allow delete: if isAuthenticated() && resource.data.uploadedBy == request.auth.uid;
+    }
+    
+    // Receipts collection
+    match /receipts/{receiptId} {
+      // Users can read their own receipts
+      allow read: if isAuthenticated() && resource.data.uploadedBy == request.auth.uid;
+      
+      // Authenticated users can create receipts
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasAll([
+          'receiptId', 'imageUrl', 'storeName', 'storeLocation',
+          'uploadedBy', 'processedAt', 'ocrText', 'productCount'
+        ])
+        && request.resource.data.uploadedBy == request.auth.uid;
+      
+      // No updates allowed
+      allow update: if false;
+      
+      // Receipt uploader can delete
+      allow delete: if isAuthenticated() && resource.data.uploadedBy == request.auth.uid;
+    }
+    
+    // Search logs collection
+    match /searchLogs/{searchId} {
+      // Users can read their own search logs
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Authenticated users can create search logs
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      
+      // No updates or deletes
+      allow update, delete: if false;
+    }
+  }
+}
+
