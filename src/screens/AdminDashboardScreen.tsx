@@ -12,8 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Button, LoadingSpinner } from '../components';
 import { useAuthStore } from '../store';
 import { colors, spacing, typography, borderRadius, shadows } from '../constants/theme';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../services/firebaseConfig';
+import * as adminService from '../services/adminService';
 
 interface DatabaseStats {
   users: number;
@@ -44,22 +43,19 @@ export const AdminDashboardScreen: React.FC = () => {
     try {
       setLoading(true);
       
-      const usersSnap = await getDocs(collection(db, 'users'));
-      const productsSnap = await getDocs(collection(db, 'products'));
-      const storesSnap = await getDocs(collection(db, 'stores'));
-      const receiptsSnap = await getDocs(collection(db, 'receipts'));
-      const searchLogsSnap = await getDocs(collection(db, 'searchLogs'));
-
+      // Call Cloud Function to get stats
+      const fetchedStats = await adminService.getFirestoreStats();
+      
       setStats({
-        users: usersSnap.size,
-        products: productsSnap.size,
-        stores: storesSnap.size,
-        receipts: receiptsSnap.size,
-        searchLogs: searchLogsSnap.size,
+        users: fetchedStats.users || 0,
+        products: fetchedStats.products || 0,
+        stores: fetchedStats.stores || 0,
+        receipts: fetchedStats.receipts || 0,
+        searchLogs: fetchedStats.searchLogs || 0,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading stats:', error);
-      Alert.alert('Error', 'Failed to load statistics');
+      Alert.alert('Error', error.message || 'Failed to load statistics');
     } finally {
       setLoading(false);
     }
@@ -68,7 +64,7 @@ export const AdminDashboardScreen: React.FC = () => {
   const handleResetDatabase = () => {
     Alert.alert(
       'Reset Database',
-      'This will delete ALL data. Are you sure?',
+      'This will delete ALL products, stores, receipts, and search logs. Users will be preserved. Are you sure?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -78,22 +74,14 @@ export const AdminDashboardScreen: React.FC = () => {
             try {
               setLoading(true);
               
-              // Delete all collections
-              const collections = ['products', 'stores', 'receipts', 'searchLogs'];
+              // Call Cloud Function to reset database
+              await adminService.resetDatabase();
               
-              for (const collectionName of collections) {
-                const snapshot = await getDocs(collection(db, collectionName));
-                const deletePromises = snapshot.docs.map(document => 
-                  deleteDoc(doc(db, collectionName, document.id))
-                );
-                await Promise.all(deletePromises);
-              }
-              
-              Alert.alert('Success', 'Database reset successfully');
-              loadStats();
-            } catch (error) {
+              Alert.alert('Success', 'Database reset successfully (users preserved)');
+              await loadStats();
+            } catch (error: any) {
               console.error('Error resetting database:', error);
-              Alert.alert('Error', 'Failed to reset database');
+              Alert.alert('Error', error.message || 'Failed to reset database');
             } finally {
               setLoading(false);
             }

@@ -11,6 +11,10 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.email == 'admin@pricesnap.com';
+    }
+    
     // Users collection
     match /users/{userId} {
       // Any authenticated user can read (for admin dashboard)
@@ -22,8 +26,8 @@ service cloud.firestore {
       // Users can update their own data
       allow update: if isOwner(userId);
       
-      // Any authenticated user can delete (for admin)
-      allow delete: if isAuthenticated();
+      // Only admin can delete users
+      allow delete: if isAdmin();
     }
     
     // Stores collection
@@ -39,8 +43,8 @@ service cloud.firestore {
       // Store creator can update
       allow update: if isAuthenticated() && resource.data.addedBy == request.auth.uid;
       
-      // Any authenticated user can delete (for admin)
-      allow delete: if isAuthenticated();
+      // Only admin can delete stores
+      allow delete: if isAdmin();
     }
     
     // Products collection
@@ -62,8 +66,8 @@ service cloud.firestore {
       // Product uploader can update
       allow update: if isAuthenticated() && resource.data.uploadedBy == request.auth.uid;
       
-      // Product uploader can delete
-      allow delete: if isAuthenticated() && resource.data.uploadedBy == request.auth.uid;
+      // Product uploader or admin can delete
+      allow delete: if (isAuthenticated() && resource.data.uploadedBy == request.auth.uid) || isAdmin();
     }
     
     // Receipts collection
@@ -82,8 +86,8 @@ service cloud.firestore {
       // No updates allowed
       allow update: if false;
       
-      // Any authenticated user can delete (for admin)
-      allow delete: if isAuthenticated();
+      // Only admin can delete receipts
+      allow delete: if isAdmin();
     }
     
     // Search logs collection
@@ -97,7 +101,7 @@ service cloud.firestore {
       
       // No updates, but allow delete for admin
       allow update: if false;
-      allow delete: if isAuthenticated();
+      allow delete: if isAdmin();
     }
   }
 }

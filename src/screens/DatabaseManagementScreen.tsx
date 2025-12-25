@@ -11,8 +11,7 @@ import {
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { Button, LoadingSpinner } from '../components';
 import { colors, spacing, typography, borderRadius, shadows } from '../constants/theme';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../services/firebaseConfig';
+import * as adminService from '../services/adminService';
 
 type DatabaseManagementRouteProp = RouteProp<
   { DatabaseManagement: { collection: string } },
@@ -34,15 +33,11 @@ export const DatabaseManagementScreen: React.FC = () => {
   const loadDocuments = async () => {
     try {
       setLoading(true);
-      const snapshot = await getDocs(collection(db, collectionName));
-      const docs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const docs = await adminService.getCollectionData(collectionName);
       setDocuments(docs);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading documents:', error);
-      Alert.alert('Error', 'Failed to load documents');
+      Alert.alert('Error', error.message || 'Failed to load documents');
     } finally {
       setLoading(false);
     }
@@ -59,12 +54,12 @@ export const DatabaseManagementScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteDoc(doc(db, collectionName, docId));
+              await adminService.deleteDocument(collectionName, docId);
               Alert.alert('Success', 'Document deleted');
-              loadDocuments();
-            } catch (error) {
+              await loadDocuments();
+            } catch (error: any) {
               console.error('Error deleting document:', error);
-              Alert.alert('Error', 'Failed to delete document');
+              Alert.alert('Error', error.message || 'Failed to delete document');
             }
           },
         },
