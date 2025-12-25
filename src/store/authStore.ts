@@ -49,18 +49,24 @@ export const useAuthStore = create<AuthState>((set) => ({
   loginAsAdmin: async (email: string, password: string) => {
     set({ loading: true, error: null });
     try {
-      // Admin credentials check
+      // Admin credentials - use Firebase auth
       const ADMIN_EMAIL = 'admin@pricesnap.com';
       const ADMIN_PASSWORD = 'Admin123!';
       
       if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        const adminUser: User = {
-          userId: 'admin',
-          email: ADMIN_EMAIL,
-          displayName: 'Administrator',
-          createdAt: new Date(),
-        };
-        set({ user: adminUser, isAuthenticated: true, isAdmin: true, loading: false });
+        // Actually sign in with Firebase
+        try {
+          const user = await authService.signIn(email, password);
+          set({ user, isAuthenticated: true, isAdmin: true, loading: false });
+        } catch (authError: any) {
+          // If admin user doesn't exist, create it
+          if (authError.message.includes('user-not-found')) {
+            const user = await authService.signUp(email, password, 'Administrator');
+            set({ user, isAuthenticated: true, isAdmin: true, loading: false });
+          } else {
+            throw authError;
+          }
+        }
       } else {
         throw new Error('Invalid admin credentials');
       }
