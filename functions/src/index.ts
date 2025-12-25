@@ -10,31 +10,31 @@ const db = admin.firestore();
 const visionClient = new vision.ImageAnnotatorClient();
 
 /**
- * Process Receipt Cloud Function
- * Extracts text from receipt image using OCR, parses products and prices,
- * fetches product images, and stores data in Firestore
+ * Parse Receipt OCR Cloud Function
+ * Only extracts and parses text from receipt, returns results for user review
+ * Does NOT save to Firestore
  */
-export const processReceipt = functions.https.onCall(async (data, context) => {
+export const parseReceiptOCR = functions.https.onCall(async (data, context) => {
   // Verify authentication
   if (!context.auth) {
     throw new functions.https.HttpsError(
       'unauthenticated',
-      'User must be authenticated to upload receipts'
+      'User must be authenticated to parse receipts'
     );
   }
 
-  const { imageUrl, storeName, storeLocation, userId } = data;
+  const { imageUrl } = data;
 
   // Validate input
-  if (!imageUrl || !storeName || !storeLocation || !userId) {
+  if (!imageUrl) {
     throw new functions.https.HttpsError(
       'invalid-argument',
-      'Missing required fields'
+      'Missing image URL'
     );
   }
 
   try {
-    // Step 1: Perform OCR on the image
+    // Perform OCR on the image
     console.log('Starting OCR processing for:', imageUrl);
     const [result] = await visionClient.textDetection(imageUrl);
     const detections = result.textAnnotations;
@@ -49,18 +49,57 @@ export const processReceipt = functions.https.onCall(async (data, context) => {
     const fullText = detections[0].description || '';
     console.log('OCR Text:', fullText);
 
-    // Step 2: Parse products and prices from text
+    // Parse products and prices from text
     const products = parseReceiptText(fullText);
     console.log('Parsed products:', products);
 
-    if (products.length === 0) {
-      throw new functions.https.HttpsError(
-        'failed-precondition',
-        'No products found in receipt'
-      );
-    }
+    return {
+      success: true,
+      products,
+      ocrText: fullText,
+    };
+  } catch (error: any) {
+    console.error('Error parsing receipt:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      error.message || 'Failed to parse receipt'
+    );
+  }
+});
 
-    // Step 3: Create/Update store document
+/**
+ * Process Receipt Cloud Function
+ * Saves confirmed products to Firestore after user review
+ */
+export const processReceipt = functions.https.onCall(async (data, context) => {
+  // Verify authentication
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'User must be authenticated to upload receipts'
+    );
+  }
+
+  const { imageUrl, storeName, storeLocation, userId, products, ocrText } = data;
+
+  // Validate input
+  if (!imageUrl || !storeName || !storeLocation || !userId || !products) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Missing required fields'
+    );
+  }
+
+  if (!Array.isArray(products) || products.length === 0) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'No products provided'
+    );
+  }
+
+  try {
+
+    // Step 1: Create/Update store document
     const storeRef = db.collection('stores').doc();
     await storeRef.set({
       storeId: storeRef.id,
@@ -74,7 +113,7 @@ export const processReceipt = functions.https.onCall(async (data, context) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Step 4: Create receipt document
+    // Step 2: Create receipt document
     const receiptRef = db.collection('receipts').doc();
     await receiptRef.set({
       receiptId: receiptRef.id,
@@ -86,11 +125,11 @@ export const processReceipt = functions.https.onCall(async (data, context) => {
       ),
       uploadedBy: userId,
       processedAt: admin.firestore.FieldValue.serverTimestamp(),
-      ocrText: fullText,
+      ocrText: ocrText || '',
       productCount: products.length,
     });
 
-    // Step 5: Process each product
+    // Step 3: Process each product
     const productPromises = products.map(async (product) => {
       // Fetch product image from OpenFoodFacts
       const imageUrl = await fetchProductImage(product.name);
@@ -137,44 +176,99 @@ export const processReceipt = functions.https.onCall(async (data, context) => {
 
 /**
  * Parse receipt text to extract products and prices
+ * Supports Turkish receipts with TL currency and comma as decimal separator
+ * Handles multi-line format where product name, percentage, and price are on separate lines
  */
 function parseReceiptText(text: string): Array<{ name: string; price: number }> {
   const products: Array<{ name: string; price: number }> = [];
-  const lines = text.split('\n');
+  const lines = text.split('\n').map(l => l.trim());
 
-  // Price pattern: matches prices like $1.99, 1.99, $1,234.99
-  const pricePattern = /\$?(\d{1,3}(?:,\d{3})*\.?\d{0,2})/;
+  // Price patterns: matches *29,99 or *29.99 or ₺29,99
+  const pricePattern = /^[*₺]\s*(\d{1,4})[,\.](\d{2})$/;
+  
+  // Percentage pattern: %5, %16, etc.
+  const percentagePattern = /^%\d+$/;
+
+  // Date/time patterns to skip
+  const datePattern = /\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/;
+  const timePattern = /\d{1,2}:\d{2}(:\d{2})?/;
+
+  // Skip keywords (both English and Turkish)
+  const skipKeywords = [
+    'total', 'toplam', 'topkdv', 'subtotal', 'tax', 'kdv', 'change',
+    'thank you', 'teşekkür', 'tarih', 'saat', 'fis no', 'nakit', 
+    'odeme', 'ödeme', 'tutari', 'kredi kart'
+  ];
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+    const line = lines[i];
     
-    // Skip empty lines and common receipt headers/footers
-    if (!line || 
-        line.toLowerCase().includes('total') ||
-        line.toLowerCase().includes('subtotal') ||
-        line.toLowerCase().includes('tax') ||
-        line.toLowerCase().includes('change') ||
-        line.toLowerCase().includes('thank you')) {
+    // Skip empty lines
+    if (!line) {
       continue;
     }
 
-    // Look for price in current line
+    // Skip date/time lines
+    if (datePattern.test(line) && timePattern.test(line)) {
+      continue;
+    }
+
+    // Skip lines with KILOGRAM X price format (weighted items)
+    if (line.includes('KILOGRAM X') || line.includes('KİLOGRAM X')) {
+      continue;
+    }
+
+    // Skip common receipt headers/footers
+    const lowerLine = line.toLowerCase();
+    if (skipKeywords.some(keyword => lowerLine.includes(keyword))) {
+      continue;
+    }
+
+    // Check if current line is a price
     const priceMatch = line.match(pricePattern);
     
     if (priceMatch) {
-      const priceStr = priceMatch[1].replace(',', '');
-      const price = parseFloat(priceStr);
+      const integerPart = priceMatch[1];
+      const decimalPart = priceMatch[2];
+      const price = parseFloat(`${integerPart}.${decimalPart}`);
       
-      // Skip invalid prices (too large or too small)
-      if (price > 0 && price < 10000) {
-        // Extract product name (everything before the price)
-        let productName = line.substring(0, priceMatch.index).trim();
+      // Skip invalid prices
+      if (price <= 0 || price >= 10000) {
+        continue;
+      }
+
+      // Look backwards for product name (skip percentage line if present)
+      let productName = '';
+      let lookbackIndex = i - 1;
+
+      // Skip percentage line if present
+      if (lookbackIndex >= 0 && percentagePattern.test(lines[lookbackIndex])) {
+        lookbackIndex--;
+      }
+
+      // Get product name
+      if (lookbackIndex >= 0) {
+        productName = lines[lookbackIndex].trim();
         
-        // Remove quantity indicators like "2x" or "x2"
+        // Clean up product name
+        // Remove trailing numbers (sizes like "500")
+        productName = productName.replace(/\s+\d+\s*$/, '').trim();
+        
+        // Remove size indicators
+        productName = productName.replace(/\s*\d+\s*(ML|L|G|KG|GRAM|KILOGRAM)\s*$/gi, '').trim();
+        
+        // Remove quantity indicators
         productName = productName.replace(/^\d+x?\s*/i, '').trim();
         productName = productName.replace(/\s*x\d+$/i, '').trim();
         
-        if (productName.length > 2) {
+        // Remove percentage if somehow still there
+        productName = productName.replace(/\s*%\d+\s*$/g, '').trim();
+        
+        // Clean up extra whitespace
+        productName = productName.replace(/\s+/g, ' ').trim();
+        
+        // Simple validation: just check it's not empty and has reasonable length
+        if (productName.length > 0) {
           products.push({
             name: productName,
             price,
@@ -270,7 +364,7 @@ export const sendPriceAlerts = functions.firestore
 
       // If this is the new lowest price
       if (price < lowestPrice) {
-        console.log(`New lowest price found for ${name}: $${price}`);
+        console.log(`New lowest price found for ${name}: ${price}`);
         
         // Get all users (in production, filter by location proximity)
         const usersSnapshot = await db.collection('users').get();

@@ -1,12 +1,11 @@
-import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { initializeApp, FirebaseApp, getApp, getApps } from 'firebase/app';
+import { initializeAuth, getReactNativePersistence, getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore, initializeFirestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getFunctions, Functions } from 'firebase/functions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Firebase configuration
-// TODO: Replace with your Firebase project configuration
-// Get these values from Firebase Console > Project Settings > General > Your apps
 const firebaseConfig = {
   apiKey: "AIzaSyAXOAzRbTe7f_sAmkSQgBvOjSgWPrdLZEg",
   authDomain: "pricesnap-d0302.firebaseapp.com",
@@ -19,22 +18,65 @@ const firebaseConfig = {
 
 // Initialize Firebase
 let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
-let storage: FirebaseStorage;
-let functions: Functions;
+let auth: Auth | null = null;
+let db: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
+let functions: Functions | null = null;
 
 try {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  functions = getFunctions(app);
+  // Check if Firebase is already initialized
+  if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+    console.log('Firebase app initialized');
+  } else {
+    app = getApp();
+    console.log('Using existing Firebase app');
+  }
   
-  console.log('Firebase initialized successfully');
-} catch (error) {
-  console.error('Error initializing Firebase:', error);
-  throw error;
+  // Initialize Auth with AsyncStorage persistence
+  try {
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    });
+    console.log('Firebase Auth initialized with AsyncStorage');
+  } catch (error: any) {
+    if (error.code === 'auth/already-initialized') {
+      auth = getAuth(app);
+      console.log('Using existing Firebase Auth');
+    } else {
+      console.error('Firebase Auth initialization error:', error.message);
+    }
+  }
+  
+  // Initialize Firestore
+  try {
+    db = getFirestore(app);
+    console.log('Firestore initialized');
+  } catch (error: any) {
+    console.error('Firestore initialization error:', error.message);
+  }
+  
+  // Initialize Storage
+  try {
+    storage = getStorage(app);
+    console.log('Storage initialized');
+  } catch (error: any) {
+    console.error('Storage initialization error:', error.message);
+  }
+  
+  // Initialize Functions
+  try {
+    functions = getFunctions(app);
+    console.log('Functions initialized');
+  } catch (error: any) {
+    console.error('Functions initialization error:', error.message);
+  }
+  
+  console.log('Firebase initialization complete');
+} catch (error: any) {
+  console.error('Critical Firebase initialization error:', error);
+  // Create a mock app to prevent crashes
+  app = {} as FirebaseApp;
 }
 
 export { app, auth, db, storage, functions };

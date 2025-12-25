@@ -1,84 +1,77 @@
-# 📱 PriceSnap - Cloud Based Smart Market Price Comparison App
+# 📱 PriceSnap - Market Price Comparison App
 
 **Developer:** Abdulaty Ahmed  
 **Student ID:** 2414506  
 **Course:** CNG 495 - Fall 2025
 
-## 🎯 Project Overview
+## Project Overview
 
-PriceSnap is a production-ready, cross-platform mobile application that revolutionizes grocery shopping by allowing users to scan receipts, compare prices across stores, and find the best deals nearby. Built with React Native and Firebase, it demonstrates enterprise-level cloud computing architecture utilizing SaaS, PaaS, and IaaS delivery models.
+PriceSnap is a mobile app that helps you save money on groceries. Take a photo of your receipt, and the app automatically extracts the products and prices. You can then search for products and compare prices across different stores near you to find the best deals.
 
-## ✨ Key Features
+I built this using React Native for the mobile app and Firebase for the backend. It's a complete cloud-based system that shows how SaaS, PaaS, and IaaS work together.
 
-- **📸 Receipt Scanning:** Capture or upload receipt images using device camera or gallery
-- **🤖 OCR Processing:** Automated text extraction using Google Cloud Vision API
-- **🔍 Smart Search:** Search products with real-time price comparison
-- **📍 Location-Based:** Find cheapest prices at nearby stores using GPS
-- **🖼️ Auto Image Fetch:** Automatically retrieves product images from OpenFoodFacts
-- **🔔 Price Alerts:** Real-time notifications when prices drop nearby
-- **🗺️ Navigation:** Get directions to stores with best prices
-- **👤 User Profiles:** Secure authentication and personalized experience
+## What It Does
 
-## 🛠️ Technology Stack
+- **Receipt Scanning:** Take a photo of your receipt or upload one from your gallery
+- **OCR Processing:** Uses Google Cloud Vision API to read the text from receipts
+- **Product Search:** Search for products and see prices from different stores
+- **Location Features:** GPS shows you which nearby stores have the cheapest prices
+- **Product Images:** Automatically finds product images from OpenFoodFacts database
+- **Price Alerts:** Get notified when prices drop at stores near you
+- **Navigation:** Get directions to the store with the best price
+- **User Accounts:** Sign up and log in to save your data
 
-### Frontend (SaaS)
-- **React Native** with **Expo** - Cross-platform mobile development
-- **TypeScript** - Type-safe development
-- **Zustand** - Lightweight state management
-- **React Navigation** - Screen navigation and routing
+## Tech Stack
 
-### Backend (PaaS)
-- **Firebase Cloud Functions** - Serverless backend logic
-- **Firebase Authentication** - User management
-- **Node.js** - Runtime environment
+### Mobile App
+- **React Native + Expo** - Build for both iOS and Android
+- **TypeScript** - Makes the code more reliable
+- **Zustand** - Handles app state
+- **React Navigation** - Moving between screens
 
-### Database & Storage (IaaS)
-- **Firestore** - NoSQL cloud database
-- **Firebase Storage** - Receipt image storage
-- **Google Cloud Vision API** - OCR processing
+### Backend
+- **Firebase Cloud Functions** - Runs code in the cloud without managing servers
+- **Firebase Authentication** - Handles user sign-up and login
+- **Node.js** - JavaScript runtime
 
-### External APIs
-- **OpenFoodFacts API** - Product image retrieval
-- **Google Maps API** - Location and navigation
-- **Expo Notifications** - Push notifications
+### Database & Storage
+- **Firestore** - Stores products, stores, and user data
+- **Firebase Storage** - Stores receipt images
+- **Google Cloud Vision API** - Reads text from receipt images
 
-## 📊 Cloud Delivery Models
+### Other Services
+- **OpenFoodFacts API** - Gets product images
+- **Google Maps API** - For location and directions
+- **Expo Notifications** - Sends price alerts
 
-### 🟢 SaaS (Software as a Service)
-Users access PriceSnap through mobile apps on iOS/Android without managing infrastructure.
+## Cloud Architecture
 
-**Features:**
-- User registration and authentication
-- Receipt upload and scanning
-- Product search and comparison
-- Price alerts and notifications
-- Multi-platform accessibility
+This project demonstrates the three main cloud service models:
 
-### 🟡 PaaS (Platform as a Service)
-Firebase provides managed platform services for backend logic.
+### SaaS (Software as a Service)
+Users just download the app and use it. They don't worry about servers or infrastructure - everything works out of the box.
 
-**Services:**
-- Cloud Functions for OCR processing
-- Automatic product name normalization
-- Image retrieval from external APIs
-- Data validation and storage
-- Event-driven price alert triggers
+### PaaS (Platform as a Service)
+I use Firebase to handle the backend without managing servers. Firebase automatically:
+- Processes receipts using OCR
+- Normalizes product names
+- Fetches product images
+- Validates data
+- Triggers price alerts when needed
 
-### 🔵 IaaS (Infrastructure as a Service)
-Google Cloud infrastructure handles scalable storage and compute.
+### IaaS (Infrastructure as a Service)
+Google Cloud provides the underlying infrastructure:
+- Database storage that scales automatically
+- File storage for images
+- Computing power that adjusts based on usage
+- Fast content delivery worldwide
+- Automatic backups
 
-**Resources:**
-- Firestore for structured product data
-- Cloud Storage for receipt images
-- Auto-scaling compute resources
-- Global CDN for fast access
-- Automatic backups and redundancy
+## Database Structure
 
-## 🗄️ Database Schema
+Here's how I organized the data in Firestore:
 
-### Collections Structure
-
-#### **users**
+### users
 ```typescript
 {
   userId: string
@@ -90,7 +83,7 @@ Google Cloud infrastructure handles scalable storage and compute.
 }
 ```
 
-#### **stores**
+### stores
 ```typescript
 {
   storeId: string
@@ -102,7 +95,7 @@ Google Cloud infrastructure handles scalable storage and compute.
 }
 ```
 
-#### **products**
+### products
 ```typescript
 {
   productId: string
@@ -119,7 +112,7 @@ Google Cloud infrastructure handles scalable storage and compute.
 }
 ```
 
-#### **receipts**
+### receipts
 ```typescript
 {
   receiptId: string
@@ -133,7 +126,7 @@ Google Cloud infrastructure handles scalable storage and compute.
 }
 ```
 
-#### **searchLogs**
+### searchLogs
 ```typescript
 {
   searchId: string
@@ -203,97 +196,96 @@ PriceSnap/
 └── tsconfig.json            # TypeScript config
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
-### Prerequisites
+### What You Need
 
-- **Node.js** (v18 or higher)
-- **npm** or **yarn**
-- **Expo CLI:** `npm install -g expo-cli`
-- **Firebase CLI:** `npm install -g firebase-tools`
-- **Firebase Account** with billing enabled (for Cloud Vision API)
-- **iOS Simulator** or **Android Emulator** or physical device
+- Node.js (version 18 or newer)
+- npm or yarn
+- Expo CLI: `npm install -g expo-cli`
+- Firebase CLI: `npm install -g firebase-tools`
+- A Firebase account with billing enabled (needed for Cloud Vision API)
+- An iPhone/Android phone with Expo Go, or an emulator
 
-### Installation
+### Setup Instructions
 
-1. **Clone the repository**
+1. **Get the code**
    ```bash
    cd PriceSnap
    ```
 
-2. **Install dependencies**
+2. **Install packages**
    ```bash
    npm install
    ```
 
-3. **Install Functions dependencies**
+3. **Install Cloud Functions packages**
    ```bash
    cd functions
    npm install
    cd ..
    ```
 
-4. **Configure Firebase**
-   - See [docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md) for detailed instructions
-   - Update `src/services/firebaseConfig.ts` with your Firebase credentials
+4. **Set up Firebase**
+   - Check [docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md) for details
+   - Put your Firebase config in `src/services/firebaseConfig.ts`
 
-5. **Start the development server**
+5. **Start the app**
    ```bash
    npm start
    ```
 
-6. **Run on device/emulator**
+6. **Run it**
    ```bash
-   # For iOS
+   # iPhone
    npm run ios
 
-   # For Android
+   # Android
    npm run android
    ```
 
-## 🔧 Firebase Setup
+## Firebase Setup
 
-### 1. Create Firebase Project
+### Step 1: Create a Firebase Project
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Click "Add Project"
-3. Enter project name: `pricesnap`
-4. Enable Google Analytics (optional)
-5. Create project
+3. Name it `pricesnap` (or whatever you want)
+4. You can enable Google Analytics if you want
+5. Create the project
 
-### 2. Enable Services
+### Step 2: Turn On the Services
 
-#### Authentication
+**Authentication:**
 1. Go to Authentication > Sign-in method
 2. Enable "Email/Password"
 
-#### Firestore Database
+**Firestore Database:**
 1. Go to Firestore Database
 2. Click "Create database"
-3. Start in **production mode**
-4. Choose location closest to users
+3. Choose production mode
+4. Pick a location close to where your users are
 
-#### Storage
+**Storage:**
 1. Go to Storage
 2. Click "Get started"
-3. Start in **production mode**
+3. Choose production mode
 
-#### Cloud Functions
-1. Upgrade to Blaze (pay-as-you-go) plan
-2. Go to Functions in Firebase Console
+**Cloud Functions:**
+1. Upgrade to Blaze plan (you only pay for what you use)
+2. Go to Functions section
 
-#### Cloud Vision API
+**Cloud Vision API:**
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Select your Firebase project
 3. Enable "Cloud Vision API"
-4. Create service account key (optional for local development)
 
-### 3. Configure App
+### Step 3: Connect the App
 
-1. Go to Project Settings > General
-2. Add a new app (Web)
-3. Copy configuration object
-4. Update `src/services/firebaseConfig.ts`:
+1. In Firebase Console, go to Project Settings > General
+2. Add a new Web app
+3. Copy the config code
+4. Paste it in `src/services/firebaseConfig.ts`:
 
 ```typescript
 const firebaseConfig = {
@@ -306,7 +298,7 @@ const firebaseConfig = {
 };
 ```
 
-### 4. Deploy Security Rules
+### Step 4: Deploy Security Rules
 
 ```bash
 firebase login
@@ -314,7 +306,7 @@ firebase init
 firebase deploy --only firestore:rules,storage
 ```
 
-### 5. Deploy Cloud Functions
+### Step 5: Deploy the Cloud Functions
 
 ```bash
 cd functions
@@ -322,34 +314,34 @@ npm run build
 firebase deploy --only functions
 ```
 
-## 📱 Usage Guide
+## How to Use
 
-### For Users
+1. **Sign Up/Login**
+   - Create an account with your email and password
+   - Or log in if you already have one
 
-1. **Register/Login**
-   - Create account with email and password
-   - Or sign in to existing account
-
-2. **Upload Receipt**
-   - Tap "Upload" tab
-   - Capture photo or select from gallery
-   - Enter store name
-   - Enable location access
+2. **Upload a Receipt**
+   - Tap the "Upload" tab
+   - Take a photo or pick one from your gallery
+   - Type the store name
+   - Allow location access
    - Tap "Upload & Process"
+   - Review the detected products and prices
+   - Edit any mistakes and confirm
 
-3. **Search Products**
-   - Tap "Search" tab
-   - Type product name
-   - View results sorted by price or distance
-   - Tap product for details
+3. **Search for Products**
+   - Tap the "Search" tab
+   - Type what you're looking for
+   - See results sorted by price or distance
+   - Tap any product to see details
 
-4. **View Product Details**
-   - See product image, price, store location
-   - Tap "Get Directions" for navigation
+4. **Check Product Details**
+   - View the product image, price, and store location
+   - Tap "Get Directions" to navigate there
 
-5. **Manage Profile**
-   - View account information
-   - Logout when needed
+5. **Your Profile**
+   - View your account info
+   - Log out when you're done
 
 ## 🔐 Security
 
@@ -444,49 +436,40 @@ eas build --platform android
 eas build --platform ios
 ```
 
-## 🐛 Troubleshooting
+## Common Problems
 
-### Common Issues
+**Firebase not working?**  
+Check that you put the right config in `firebaseConfig.ts`
 
-**Issue:** Firebase not initialized
-**Solution:** Verify `firebaseConfig.ts` has correct credentials
+**OCR not reading receipts?**  
+Make sure Cloud Vision API is enabled and you have billing turned on
 
-**Issue:** OCR not working
-**Solution:** Ensure Cloud Vision API is enabled and billing is active
+**Camera won't open?**  
+Go to your phone settings and allow camera access
 
-**Issue:** Camera not working
-**Solution:** Grant camera permissions in device settings
+**Location not working?**  
+Turn on location permissions and make sure GPS is on
 
-**Issue:** Location not working
-**Solution:** Grant location permissions and ensure GPS is enabled
+**No notifications?**  
+Notifications only work on real phones, not emulators
 
-**Issue:** Notifications not working
-**Solution:** Test on physical device (not emulator)
+## About This Project
 
-## 📝 License
+This is my graduation project for CNG 495. I built PriceSnap to show how cloud computing works in a real app, specifically the three service models: SaaS, PaaS, and IaaS.
 
-This project is created for educational purposes as part of CNG 495 course.
+**Developer:** Abdulaty Ahmed  
+**Student ID:** 2414506  
+**Course:** CNG 495 - Fall 2025
 
-## 👨‍🎓 Author
+## Credits
 
-**Abdulaty Ahmed**  
-Student ID: 2414506  
-Course: CNG 495 - Fall 2025
+This project uses:
+- Firebase for the backend
+- Google Cloud Vision for reading receipts
+- OpenFoodFacts for product images
+- Expo for building the mobile app
+- React Navigation for moving between screens
+- Zustand for managing app state
 
-## 🙏 Acknowledgments
-
-- Firebase for cloud infrastructure
-- Google Cloud Vision for OCR
-- OpenFoodFacts for product data
-- Expo for React Native tooling
-- React Navigation for routing
-- Zustand for state management
-
-## 📧 Contact
-
-For questions or support regarding this project, please contact through course channels.
-
----
-
-**Note:** This is a student project demonstrating cloud computing concepts including SaaS, PaaS, and IaaS delivery models with real-world application development practices.
+Thanks to all these tools for making this project possible.
 

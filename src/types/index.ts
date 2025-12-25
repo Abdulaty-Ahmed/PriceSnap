@@ -114,6 +114,13 @@ export type AppStackParamList = {
   Main: undefined;
   ProductDetail: { productId: string };
   MapView: { products: ProductWithDistance[] };
+  ReviewReceipt: {
+    imageUrl: string;
+    storeName: string;
+    storeLocation: { latitude: number; longitude: number };
+    products: Array<{ name: string; price: number }>;
+    ocrText: string;
+  };
 };
 
 // Form Types

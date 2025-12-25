@@ -31,7 +31,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress }) =>
         <Text style={styles.name} numberOfLines={2}>
           {product.name}
         </Text>
-        <Text style={styles.price}>${product.price.toFixed(2)}</Text>
+        <Text style={styles.price}>₺{product.price.toFixed(2)}</Text>
         <View style={styles.footer}>
           <Text style={styles.storeName} numberOfLines={1}>
             📍 {product.storeName}

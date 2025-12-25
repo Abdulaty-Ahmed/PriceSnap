@@ -92,7 +92,7 @@ export const sendPriceDropNotification = async (
 ): Promise<void> => {
   await scheduleLocalNotification(
     '💰 Price Drop Alert!',
-    `${productName} is now $${newPrice.toFixed(2)} at ${storeName} (${distance} away)`,
+    `${productName} is now ₺${newPrice.toFixed(2)} at ${storeName} (${distance} away)`,
     { type: 'price_drop', productName, newPrice, storeName }
   );
 };

@@ -4,6 +4,7 @@ export * from './RegisterScreen';
 export * from './HomeScreen';
 export * from './SearchScreen';
 export * from './UploadReceiptScreen';
+export * from './ReviewReceiptScreen';
 export * from './ProfileScreen';
 export * from './ProductDetailScreen';
 

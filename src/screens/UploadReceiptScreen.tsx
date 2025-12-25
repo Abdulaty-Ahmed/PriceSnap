@@ -9,16 +9,17 @@ import {
   Alert,
   TouchableOpacity,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Button, Input, LoadingSpinner } from '../components';
 import { useAuthStore, useUploadStore } from '../store';
 import * as cameraService from '../services/cameraService';
 import * as storageService from '../services/storageService';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../services/firebaseConfig';
+import { parseReceiptOCR } from '../services/receiptService';
 import { colors, spacing, typography, borderRadius, shadows } from '../constants/theme';
-import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../constants';
+import { ERROR_MESSAGES } from '../constants';
 
 export const UploadReceiptScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
   const { user } = useAuthStore();
   const {
     imageUri,
@@ -82,20 +83,20 @@ export const UploadReceiptScreen: React.FC = () => {
       // 1. Upload image to Firebase Storage
       const imageUrl = await storageService.uploadReceiptImage(imageUri, user.userId);
 
-      // 2. Call Cloud Function to process receipt
-      const processReceipt = httpsCallable(functions, 'processReceipt');
-      const result = await processReceipt({
+      // 2. Call Cloud Function to parse receipt (OCR only)
+      const parseResult = await parseReceiptOCR(imageUrl);
+
+      // 3. Navigate to review screen
+      navigation.navigate('ReviewReceipt', {
         imageUrl,
         storeName: storeName.trim(),
         storeLocation,
-        userId: user.userId,
+        products: parseResult.products,
+        ocrText: parseResult.ocrText,
       });
 
-      Alert.alert(
-        'Success',
-        SUCCESS_MESSAGES.UPLOAD.SUCCESS,
-        [{ text: 'OK', onPress: () => clearForm() }]
-      );
+      // Clear form for next upload
+      clearForm();
     } catch (err: any) {
       console.error('Upload error:', err);
       setError(err.message || ERROR_MESSAGES.UPLOAD.FAILED);

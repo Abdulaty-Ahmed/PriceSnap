@@ -82,7 +82,7 @@ export const ProductDetailScreen: React.FC = () => {
           
           <View style={styles.priceContainer}>
             <Text style={styles.priceLabel}>Price</Text>
-            <Text style={styles.price}>${product.price.toFixed(2)}</Text>
+            <Text style={styles.price}>₺{product.price.toFixed(2)}</Text>
           </View>
 
           <View style={styles.section}>

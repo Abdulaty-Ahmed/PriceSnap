@@ -20,6 +20,9 @@ export const signUp = async (
   displayName: string
 ): Promise<AppUser> => {
   try {
+    if (!auth || !db) {
+      throw new Error('Firebase is not initialized');
+    }
     // Create authentication user
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -52,6 +55,9 @@ export const signUp = async (
  */
 export const signIn = async (email: string, password: string): Promise<AppUser> => {
   try {
+    if (!auth || !db) {
+      throw new Error('Firebase is not initialized');
+    }
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
@@ -95,6 +101,9 @@ export const signIn = async (email: string, password: string): Promise<AppUser> 
  */
 export const signOut = async (): Promise<void> => {
   try {
+    if (!auth) {
+      throw new Error('Firebase is not initialized');
+    }
     await firebaseSignOut(auth);
   } catch (error: any) {
     console.error('Sign out error:', error);
@@ -106,13 +115,18 @@ export const signOut = async (): Promise<void> => {
  * Get current authenticated user
  */
 export const getCurrentUser = (): User | null => {
-  return auth.currentUser;
+  return auth?.currentUser || null;
 };
 
 /**
  * Listen to authentication state changes
  */
 export const onAuthStateChanged = (callback: (user: User | null) => void) => {
+  if (!auth) {
+    console.warn('Firebase auth is not initialized');
+    callback(null);
+    return () => {}; // Return empty unsubscribe function
+  }
   return firebaseOnAuthStateChanged(auth, callback);
 };
 
@@ -121,6 +135,9 @@ export const onAuthStateChanged = (callback: (user: User | null) => void) => {
  */
 export const updateNotificationToken = async (userId: string, token: string): Promise<void> => {
   try {
+    if (!db) {
+      throw new Error('Firebase is not initialized');
+    }
     await setDoc(
       doc(db, COLLECTIONS.USERS, userId),
       { notificationToken: token },
@@ -140,6 +157,9 @@ export const updateUserLocation = async (
   location: { latitude: number; longitude: number }
 ): Promise<void> => {
   try {
+    if (!db) {
+      throw new Error('Firebase is not initialized');
+    }
     await setDoc(
       doc(db, COLLECTIONS.USERS, userId),
       { location },

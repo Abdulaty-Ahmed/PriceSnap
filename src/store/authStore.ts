@@ -78,25 +78,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   initializeAuth: () => {
     authService.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
-        // User is signed in
-        try {
-          const user = await authService.signIn(
-            firebaseUser.email!,
-            '' // Password not needed for re-authentication
-          ).catch(() => {
-            // If sign-in fails, create user object from Firebase user
-            return {
-              userId: firebaseUser.uid,
-              email: firebaseUser.email!,
-              displayName: firebaseUser.displayName || 'User',
-              createdAt: new Date(),
-            };
-          });
-          
-          set({ user, isAuthenticated: true, loading: false });
-        } catch (error) {
-          set({ user: null, isAuthenticated: false, loading: false });
-        }
+        // User is signed in - create user object from Firebase user
+        const user: User = {
+          userId: firebaseUser.uid,
+          email: firebaseUser.email!,
+          displayName: firebaseUser.displayName || 'User',
+          createdAt: new Date(),
+        };
+        
+        set({ user, isAuthenticated: true, loading: false });
       } else {
         // User is signed out
         set({ user: null, isAuthenticated: false, loading: false });

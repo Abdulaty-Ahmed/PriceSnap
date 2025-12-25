@@ -1,10 +1,12 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import {
   HomeScreen,
   SearchScreen,
   UploadReceiptScreen,
+  ReviewReceiptScreen,
   ProfileScreen,
   ProductDetailScreen,
 } from '../screens';
@@ -79,7 +81,7 @@ const TabNavigator: React.FC = () => {
 };
 
 const TabIcon: React.FC<{ icon: string; color: string }> = ({ icon }) => {
-  return <span style={{ fontSize: 24 }}>{icon}</span>;
+  return <Text style={{ fontSize: 24 }}>{icon}</Text>;
 };
 
 export const AppNavigator: React.FC = () => {
@@ -105,6 +107,11 @@ export const AppNavigator: React.FC = () => {
         name="ProductDetail"
         component={ProductDetailScreen}
         options={{ title: 'Product Details' }}
+      />
+      <Stack.Screen
+        name="ReviewReceipt"
+        component={ReviewReceiptScreen}
+        options={{ title: 'Review Products' }}
       />
     </Stack.Navigator>
   );

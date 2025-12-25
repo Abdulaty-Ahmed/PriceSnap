@@ -33,11 +33,16 @@ export default function App() {
   }, []);
 
   const setupNotifications = async () => {
-    if (user) {
-      const token = await registerForPushNotifications();
-      if (token) {
-        await updateNotificationToken(user.userId, token);
+    try {
+      if (user) {
+        const token = await registerForPushNotifications();
+        if (token) {
+          await updateNotificationToken(user.userId, token);
+        }
       }
+    } catch (error) {
+      console.log('Notification setup failed:', error);
+      // Don't crash the app if notifications fail
     }
   };
 
