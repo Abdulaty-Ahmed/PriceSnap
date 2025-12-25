@@ -31,7 +31,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
     try {
       const user = await authService.signIn(email, password);
-      set({ user, isAuthenticated: true, isAdmin: false, loading: false });
+      // Check if this is the admin user
+      const isAdminUser = email.toLowerCase() === 'admin@pricesnap.com';
+      set({ user, isAuthenticated: true, isAdmin: isAdminUser, loading: false });
     } catch (error: any) {
       let errorMessage = ERROR_MESSAGES.AUTH.NETWORK_ERROR;
       
@@ -47,36 +49,23 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   loginAsAdmin: async (email: string, password: string) => {
+    // Admin login uses the same logic as regular login
+    // Admin status is determined by email address
     set({ loading: true, error: null });
     try {
-      // Admin credentials - use Firebase auth
-      const ADMIN_EMAIL = 'admin@pricesnap.com';
-      const ADMIN_PASSWORD = 'Admin123!';
-      
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        // Actually sign in with Firebase
-        try {
-          const user = await authService.signIn(email, password);
-          set({ user, isAuthenticated: true, isAdmin: true, loading: false });
-        } catch (authError: any) {
-          // If admin user doesn't exist, create it
-          if (authError.message.includes('user-not-found')) {
-            const user = await authService.signUp(email, password, 'Administrator');
-            set({ user, isAuthenticated: true, isAdmin: true, loading: false });
-          } else {
-            throw authError;
-          }
-        }
-      } else {
-        throw new Error('Invalid admin credentials');
-      }
+      const user = await authService.signIn(email, password);
+      const isAdminUser = email.toLowerCase() === 'admin@pricesnap.com';
+      set({ user, isAuthenticated: true, isAdmin: isAdminUser, loading: false });
     } catch (error: any) {
-      set({ 
-        error: 'Invalid admin credentials', 
-        loading: false, 
-        isAuthenticated: false, 
-        isAdmin: false 
-      });
+      let errorMessage = 'Invalid admin credentials. ';
+      
+      if (error.message.includes('user-not-found')) {
+        errorMessage += 'Admin account does not exist. Please create it first using Register.';
+      } else if (error.message.includes('wrong-password')) {
+        errorMessage += 'Wrong password.';
+      }
+      
+      set({ error: errorMessage, loading: false, isAuthenticated: false, isAdmin: false });
       throw error;
     }
   },

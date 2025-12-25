@@ -87,10 +87,14 @@ export const AdminLoginScreen: React.FC = () => {
           />
 
           <View style={styles.infoBox}>
+            <Text style={styles.infoTitle}>📝 Setup Instructions:</Text>
             <Text style={styles.infoText}>
-              Default Admin Credentials:{'\n'}
+              1. First, go back and Register with:{'\n'}
               Email: admin@pricesnap.com{'\n'}
-              Password: Admin123!
+              Password: Admin123!{'\n'}
+              Name: Administrator{'\n\n'}
+              2. Then return here and login{'\n\n'}
+              (One-time setup)
             </Text>
           </View>
         </View>
@@ -145,6 +149,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
+  },
+  infoTitle: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: spacing.sm,
   },
   infoText: {
     ...typography.bodySmall,
