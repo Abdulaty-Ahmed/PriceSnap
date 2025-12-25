@@ -1,4 +1,4 @@
-import * as functions from 'firebase-functions';
+import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import vision from '@google-cloud/vision';
 import axios from 'axios';
@@ -388,4 +388,130 @@ export const sendPriceAlerts = functions.firestore
       return null;
     }
   });
+
+/**
+ * Helper function to verify admin access
+ */
+function isAdmin(context: functions.https.CallableContext): boolean {
+  if (!context.auth) {
+    return false;
+  }
+  // Check if the user's email is the admin email
+  return context.auth.token.email === 'admin@pricesnap.com';
+}
+
+/**
+ * Get Firestore Statistics
+ * Returns count of documents in all collections
+ */
+export const getFirestoreStats = functions.https.onCall(async (data, context) => {
+  // Verify admin authentication
+  if (!isAdmin(context)) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Only administrators can access database statistics'
+    );
+  }
+
+  try {
+    const collections = ['users', 'products', 'stores', 'receipts', 'searchLogs'];
+    const stats: Record<string, number> = {};
+
+    for (const collectionName of collections) {
+      const snapshot = await db.collection(collectionName).count().get();
+      stats[collectionName] = snapshot.data().count;
+    }
+
+    console.log('Firestore stats:', stats);
+    return stats;
+  } catch (error: any) {
+    console.error('Error getting Firestore stats:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      error.message || 'Failed to get database statistics'
+    );
+  }
+});
+
+/**
+ * Reset Database
+ * Deletes all documents from specified collections
+ */
+export const resetDatabase = functions.https.onCall(async (data, context) => {
+  // Verify admin authentication
+  if (!isAdmin(context)) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Only administrators can reset the database'
+    );
+  }
+
+  try {
+    const collections = ['products', 'stores', 'receipts', 'searchLogs'];
+    // Note: We don't delete users collection for safety
+    
+    for (const collectionName of collections) {
+      const snapshot = await db.collection(collectionName).get();
+      const batch = db.batch();
+      
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      
+      await batch.commit();
+      console.log(`Deleted ${snapshot.size} documents from ${collectionName}`);
+    }
+
+    return {
+      success: true,
+      message: 'Database reset successfully (users preserved)',
+    };
+  } catch (error: any) {
+    console.error('Error resetting database:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      error.message || 'Failed to reset database'
+    );
+  }
+});
+
+/**
+ * Backup Database
+ * Logs all data to console for backup purposes
+ */
+export const backupDatabase = functions.https.onCall(async (data, context) => {
+  // Verify admin authentication
+  if (!isAdmin(context)) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Only administrators can backup the database'
+    );
+  }
+
+  try {
+    const collections = ['users', 'products', 'stores', 'receipts', 'searchLogs'];
+    const backup: Record<string, any[]> = {};
+
+    for (const collectionName of collections) {
+      const snapshot = await db.collection(collectionName).get();
+      backup[collectionName] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      console.log(`Backup of ${collectionName}:`, JSON.stringify(backup[collectionName], null, 2));
+    }
+
+    return {
+      success: true,
+      message: 'Database backup logged to Cloud Functions console',
+      timestamp: new Date().toISOString(),
+    };
+  } catch (error: any) {
+    console.error('Error backing up database:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      error.message || 'Failed to backup database'
+    );
+  }
+});
 
