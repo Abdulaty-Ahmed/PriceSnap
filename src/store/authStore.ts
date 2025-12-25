@@ -8,9 +8,11 @@ interface AuthState {
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   
   // Actions
   login: (email: string, password: string) => Promise<void>;
+  loginAsAdmin: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -23,12 +25,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   loading: false,
   error: null,
   isAuthenticated: false,
+  isAdmin: false,
 
   login: async (email: string, password: string) => {
     set({ loading: true, error: null });
     try {
       const user = await authService.signIn(email, password);
-      set({ user, isAuthenticated: true, loading: false });
+      set({ user, isAuthenticated: true, isAdmin: false, loading: false });
     } catch (error: any) {
       let errorMessage = ERROR_MESSAGES.AUTH.NETWORK_ERROR;
       
@@ -38,7 +41,36 @@ export const useAuthStore = create<AuthState>((set) => ({
         errorMessage = ERROR_MESSAGES.AUTH.USER_NOT_FOUND;
       }
       
-      set({ error: errorMessage, loading: false, isAuthenticated: false });
+      set({ error: errorMessage, loading: false, isAuthenticated: false, isAdmin: false });
+      throw error;
+    }
+  },
+
+  loginAsAdmin: async (email: string, password: string) => {
+    set({ loading: true, error: null });
+    try {
+      // Admin credentials check
+      const ADMIN_EMAIL = 'admin@pricesnap.com';
+      const ADMIN_PASSWORD = 'Admin123!';
+      
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        const adminUser: User = {
+          userId: 'admin',
+          email: ADMIN_EMAIL,
+          displayName: 'Administrator',
+          createdAt: new Date(),
+        };
+        set({ user: adminUser, isAuthenticated: true, isAdmin: true, loading: false });
+      } else {
+        throw new Error('Invalid admin credentials');
+      }
+    } catch (error: any) {
+      set({ 
+        error: 'Invalid admin credentials', 
+        loading: false, 
+        isAuthenticated: false, 
+        isAdmin: false 
+      });
       throw error;
     }
   },

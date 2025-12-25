@@ -11,45 +11,29 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Button, Input } from '../components';
 import { useAuthStore } from '../store';
-import { validateEmail, validatePassword } from '../utils/validators';
 import { colors, spacing, typography } from '../constants/theme';
-import { ERROR_MESSAGES } from '../constants';
 
-export const LoginScreen: React.FC = () => {
+export const AdminLoginScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { login, loading, error, clearError } = useAuthStore();
+  const { loginAsAdmin, loading, error, clearError } = useAuthStore();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
 
   const handleLogin = async () => {
-    // Clear previous errors
-    setEmailError('');
-    setPasswordError('');
     clearError();
 
-    // Validate inputs
-    let hasError = false;
-
-    if (!validateEmail(email)) {
-      setEmailError(ERROR_MESSAGES.AUTH.INVALID_EMAIL);
-      hasError = true;
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Error', 'Please enter both email and password');
+      return;
     }
-
-    if (!validatePassword(password)) {
-      setPasswordError(ERROR_MESSAGES.AUTH.WEAK_PASSWORD);
-      hasError = true;
-    }
-
-    if (hasError) return;
 
     try {
-      await login(email, password);
+      await loginAsAdmin(email, password);
       // Navigation will be handled automatically by auth state change
     } catch (err) {
       // Error is already set in the store
+      Alert.alert('Error', 'Invalid admin credentials');
     }
   };
 
@@ -63,53 +47,52 @@ export const LoginScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.logo}>📱</Text>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
+          <Text style={styles.logo}>🔐</Text>
+          <Text style={styles.title}>Admin Access</Text>
+          <Text style={styles.subtitle}>Enter admin credentials</Text>
         </View>
 
         <View style={styles.form}>
           <Input
-            label="Email"
+            label="Admin Email"
             value={email}
             onChangeText={setEmail}
-            placeholder="Enter your email"
+            placeholder="admin@pricesnap.com"
             keyboardType="email-address"
             autoCapitalize="none"
-            error={emailError}
           />
 
           <Input
-            label="Password"
+            label="Admin Password"
             value={password}
             onChangeText={setPassword}
-            placeholder="Enter your password"
+            placeholder="Enter admin password"
             secureTextEntry
-            error={passwordError}
           />
 
           {error && <Text style={styles.errorText}>{error}</Text>}
 
           <Button
-            title="Sign In"
+            title="Sign In as Admin"
             onPress={handleLogin}
             loading={loading}
             style={styles.button}
           />
 
           <Button
-            title="Create Account"
-            onPress={() => navigation.navigate('Register')}
+            title="Back to User Login"
+            onPress={() => navigation.navigate('Login')}
             variant="outline"
             style={styles.button}
           />
 
-          <Button
-            title="🔐 Admin Access"
-            onPress={() => navigation.navigate('AdminLogin')}
-            variant="outline"
-            style={[styles.button, styles.adminButton]}
-          />
+          <View style={styles.infoBox}>
+            <Text style={styles.infoText}>
+              Default Admin Credentials:{'\n'}
+              Email: admin@pricesnap.com{'\n'}
+              Password: Admin123!
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -149,15 +132,24 @@ const styles = StyleSheet.create({
   button: {
     marginTop: spacing.md,
   },
-  adminButton: {
-    marginTop: spacing.xl,
-    opacity: 0.7,
-  },
   errorText: {
     ...typography.bodySmall,
     color: colors.error,
     textAlign: 'center',
     marginVertical: spacing.sm,
+  },
+  infoBox: {
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: 8,
+    marginTop: spacing.xl,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
+  infoText: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    lineHeight: 20,
   },
 });
 

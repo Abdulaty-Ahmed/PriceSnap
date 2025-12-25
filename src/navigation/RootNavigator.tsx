@@ -12,7 +12,7 @@ import { colors, typography, spacing } from '../constants/theme';
 const Stack = createStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
-  const { isAuthenticated, initializeAuth } = useAuthStore();
+  const { isAuthenticated, isAdmin, initializeAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
@@ -49,7 +49,11 @@ export const RootNavigator: React.FC = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
-          <Stack.Screen name="App" component={AppNavigator} />
+          isAdmin ? (
+            <Stack.Screen name="App" component={AppNavigator} initialParams={{ screen: 'AdminDashboard' }} />
+          ) : (
+            <Stack.Screen name="App" component={AppNavigator} />
+          )
         ) : (
           <Stack.Screen name="Auth" component={AuthNavigator} />
         )}

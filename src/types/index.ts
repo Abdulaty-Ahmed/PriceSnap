@@ -101,6 +101,7 @@ export type RootStackParamList = {
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  AdminLogin: undefined;
 };
 
 export type AppTabParamList = {
@@ -121,7 +122,23 @@ export type AppStackParamList = {
     products: Array<{ name: string; price: number }>;
     ocrText: string;
   };
+  AdminDashboard: undefined;
+  DatabaseManagement: { collection: string };
 };
+
+// Admin Types
+export interface AdminStats {
+  totalUsers: number;
+  totalProducts: number;
+  totalStores: number;
+  totalReceipts: number;
+  recentUploads: number;
+}
+
+export interface DatabaseRecord {
+  id: string;
+  data: any;
+}
 
 // Form Types
 export interface LoginFormData {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { LoginScreen, RegisterScreen } from '../screens';
+import { LoginScreen, RegisterScreen, AdminLoginScreen } from '../screens';
 import { AuthStackParamList } from '../types';
 
 const Stack = createStackNavigator<AuthStackParamList>();
@@ -14,6 +14,7 @@ export const AuthNavigator: React.FC = () => {
     >
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
     </Stack.Navigator>
   );
 };

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
+import { useNavigation } from '@react-navigation/native';
 import {
   HomeScreen,
   SearchScreen,
@@ -9,14 +10,27 @@ import {
   ReviewReceiptScreen,
   ProfileScreen,
   ProductDetailScreen,
+  AdminDashboardScreen,
+  DatabaseManagementScreen,
 } from '../screens';
 import { AppTabParamList, AppStackParamList } from '../types';
 import { colors, typography } from '../constants/theme';
+import { useAuthStore } from '../store';
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
 const Stack = createStackNavigator<AppStackParamList>();
 
 const TabNavigator: React.FC = () => {
+  const { isAdmin } = useAuthStore();
+  const navigation = useNavigation<any>();
+
+  useEffect(() => {
+    // If admin, navigate to admin dashboard
+    if (isAdmin) {
+      navigation.navigate('AdminDashboard');
+    }
+  }, [isAdmin]);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -112,6 +126,16 @@ export const AppNavigator: React.FC = () => {
         name="ReviewReceipt"
         component={ReviewReceiptScreen}
         options={{ title: 'Review Products' }}
+      />
+      <Stack.Screen
+        name="AdminDashboard"
+        component={AdminDashboardScreen}
+        options={{ title: 'Admin Dashboard' }}
+      />
+      <Stack.Screen
+        name="DatabaseManagement"
+        component={DatabaseManagementScreen}
+        options={{ title: 'Database Management' }}
       />
     </Stack.Navigator>
   );
