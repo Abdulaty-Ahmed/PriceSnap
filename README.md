@@ -12,14 +12,23 @@ I built this using React Native for the mobile app and Firebase for the backend.
 
 ## What It Does
 
+### User Features
 - **Receipt Scanning:** Take a photo of your receipt or upload one from your gallery
 - **OCR Processing:** Uses Google Cloud Vision API to read the text from receipts
+- **Product Review:** Review and edit parsed products before saving
 - **Product Search:** Search for products and see prices from different stores
 - **Location Features:** GPS shows you which nearby stores have the cheapest prices
 - **Product Images:** Automatically finds product images from OpenFoodFacts database
 - **Price Alerts:** Get notified when prices drop at stores near you
 - **Navigation:** Get directions to the store with the best price
 - **User Accounts:** Sign up and log in to save your data
+
+### Admin Features
+- **Admin Dashboard:** View real-time statistics for all collections
+- **Database Management:** Browse, view, and delete individual documents
+- **Database Reset:** Clear all products, stores, receipts, and search logs (preserves users)
+- **Database Backup:** Export all data to Cloud Functions console logs
+- **Secure Access:** Admin-only operations protected by Firebase authentication
 
 ## Tech Stack
 
@@ -43,6 +52,24 @@ I built this using React Native for the mobile app and Firebase for the backend.
 - **OpenFoodFacts API** - Gets product images
 - **Google Maps API** - For location and directions
 - **Expo Notifications** - Sends price alerts
+
+## Cloud Functions
+
+The app uses six Cloud Functions to handle backend operations:
+
+### Receipt Processing
+- **`parseReceiptOCR`** - Extracts text from receipt images using Google Cloud Vision API and parses products/prices
+- **`processReceipt`** - Saves confirmed products to Firestore after user review
+
+### Price Alerts
+- **`sendPriceAlerts`** - Triggers when a new product is added, checks if it's cheaper, and sends notifications to nearby users
+
+### Admin Operations
+- **`getFirestoreStats`** - Returns document counts for all collections (admin only)
+- **`resetDatabase`** - Deletes all products, stores, receipts, and search logs while preserving users (admin only)
+- **`backupDatabase`** - Exports all data to Cloud Functions console logs for backup (admin only)
+
+All admin functions verify that the authenticated user has the admin email (`admin@pricesnap.com`) before executing.
 
 ## Cloud Architecture
 
@@ -149,9 +176,13 @@ PriceSnap/
 │   │   └── ...
 │   ├── screens/             # Screen components
 │   │   ├── LoginScreen.tsx
+│   │   ├── AdminLoginScreen.tsx
+│   │   ├── AdminDashboardScreen.tsx
+│   │   ├── DatabaseManagementScreen.tsx
 │   │   ├── HomeScreen.tsx
 │   │   ├── SearchScreen.tsx
 │   │   ├── UploadReceiptScreen.tsx
+│   │   ├── ReviewReceiptScreen.tsx
 │   │   └── ...
 │   ├── navigation/          # Navigation setup
 │   │   ├── RootNavigator.tsx
@@ -163,6 +194,8 @@ PriceSnap/
 │   │   └── uploadStore.ts
 │   ├── services/            # API and Firebase services
 │   │   ├── authService.ts
+│   │   ├── adminService.ts
+│   │   ├── receiptService.ts
 │   │   ├── storageService.ts
 │   │   ├── cameraService.ts
 │   │   ├── locationService.ts
@@ -178,7 +211,8 @@ PriceSnap/
 │       └── config.ts
 ├── functions/               # Firebase Cloud Functions
 │   ├── src/
-│   │   └── index.ts
+│   │   └── index.ts         # parseReceiptOCR, processReceipt, sendPriceAlerts,
+│   │                        # getFirestoreStats, resetDatabase, backupDatabase
 │   ├── package.json
 │   └── tsconfig.json
 ├── diagrams/                # System diagrams
@@ -316,6 +350,8 @@ firebase deploy --only functions
 
 ## How to Use
 
+### For Regular Users
+
 1. **Sign Up/Login**
    - Create an account with your email and password
    - Or log in if you already have one
@@ -342,6 +378,28 @@ firebase deploy --only functions
 5. **Your Profile**
    - View your account info
    - Log out when you're done
+
+### For Administrators
+
+1. **Admin Access**
+   - On the login screen, tap "🔐 Admin Access"
+   - First time: Register with email `admin@pricesnap.com` and password `Admin123!`
+   - Subsequent times: Login with admin credentials
+
+2. **View Statistics**
+   - Dashboard shows real-time counts for all collections
+   - Tap any stat card to browse that collection
+   - Use "Refresh Stats" to update counts
+
+3. **Manage Data**
+   - Browse documents in any collection
+   - Delete individual documents
+   - View document details in JSON format
+
+4. **Database Operations**
+   - **Reset Database:** Deletes all products, stores, receipts, and search logs (users preserved)
+   - **Backup Database:** Exports all data to Cloud Functions logs
+   - All operations are protected and require admin authentication
 
 ## 🔐 Security
 
