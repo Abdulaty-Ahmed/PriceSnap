@@ -94,3 +94,5 @@ export const deleteDocument = async (collectionName: string, docId: string): Pro
   }
 };
 
+
+
